@@ -1,7 +1,11 @@
 package com.pol.springboot.app.librarydemo.controller;
 
+import com.pol.springboot.app.librarydemo.dto.alquiler.AlquilerCreateDTO;
+import com.pol.springboot.app.librarydemo.dto.alquiler.AlquilerResponseDTO;
+import com.pol.springboot.app.librarydemo.mapper.AlquilerMapper;
 import com.pol.springboot.app.librarydemo.model.Alquiler;
 import com.pol.springboot.app.librarydemo.services.AlquilerService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,8 +35,11 @@ public class AlquilerController {
 
     // 🔹 Crear un alquiler
     @PostMapping
-    public Alquiler crear(@RequestBody Alquiler alquiler) {
-        return alquilerService.guardarAlquiler(alquiler);
+    public AlquilerResponseDTO crear(
+            @Valid @RequestBody AlquilerCreateDTO dto
+    ) {
+        Alquiler alquiler = alquilerService.crearAlquiler(dto);
+        return AlquilerMapper.toResponseDTO(alquiler);
     }
 
     // 🔹 Devolver un artículo

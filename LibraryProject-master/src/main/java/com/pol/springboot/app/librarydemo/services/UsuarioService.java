@@ -1,6 +1,8 @@
 package com.pol.springboot.app.librarydemo.services;
 
+import com.pol.springboot.app.librarydemo.dto.usuario.UsuarioCreateDTO;
 import com.pol.springboot.app.librarydemo.exceptions.UsuarioNotFoundException;
+import com.pol.springboot.app.librarydemo.mapper.UsuarioMapper;
 import com.pol.springboot.app.librarydemo.model.Rol;
 import com.pol.springboot.app.librarydemo.model.Usuario;
 import com.pol.springboot.app.librarydemo.repository.RolRepository;
@@ -28,20 +30,20 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-        public Usuario createUser(Usuario usuario) {
+    public Usuario createUser(UsuarioCreateDTO dto) {
 
-            Rol rol = rolRepository.findById(usuario.getRol().getId())
-                    .orElseThrow(() -> new RuntimeException("Rol no existe en la base de datos"));
+        Rol rol = rolRepository.findById(dto.getRolId())
+                .orElseThrow(() -> new RuntimeException("Rol no existe"));
 
-            usuario.setRol(rol);
+        Usuario usuario = UsuarioMapper.toEntity(dto, rol);
 
-            // 🔐 ENCRIPTAR AQUÍ
-            usuario.setPassword(
-                    passwordEncoder.encode(usuario.getPassword())
-            );
+        // 🔐 Encriptar password
+        usuario.setPassword(
+                passwordEncoder.encode(usuario.getPassword())
+        );
 
-            return usuarioRepository.save(usuario);
-        }
+        return usuarioRepository.save(usuario);
+    }
 
     public void deleteUsuario(Long id) {
         usuarioRepository.deleteById(id);

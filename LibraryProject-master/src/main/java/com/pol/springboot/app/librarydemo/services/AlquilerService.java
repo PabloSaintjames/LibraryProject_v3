@@ -1,8 +1,10 @@
 package com.pol.springboot.app.librarydemo.services;
 
+import com.pol.springboot.app.librarydemo.dto.alquiler.AlquilerCreateDTO;
 import com.pol.springboot.app.librarydemo.exceptions.AlquilerNotFoundException;
 import com.pol.springboot.app.librarydemo.exceptions.AlquilerYaCerradoException;
 import com.pol.springboot.app.librarydemo.exceptions.ArticuloAlquiladoException;
+import com.pol.springboot.app.librarydemo.mapper.AlquilerMapper;
 import com.pol.springboot.app.librarydemo.model.Alquiler;
 import com.pol.springboot.app.librarydemo.model.Articulo;
 import com.pol.springboot.app.librarydemo.model.Usuario;
@@ -41,27 +43,19 @@ public class AlquilerService {
     }
 
     @Transactional
-    public Alquiler guardarAlquiler(Alquiler alquiler) {
+    public Alquiler crearAlquiler(AlquilerCreateDTO dto) {
 
-        // 🔹 Ya NO devuelve Optional
-        Usuario usuario = usuarioService.findById(alquiler.getUsuario().getId());
-
-        Articulo articulo = articuloService.findById(alquiler.getArticulo().getId());
+        Usuario usuario = usuarioService.findById(dto.getUsuarioId());
+        Articulo articulo = articuloService.findById(dto.getArticuloId());
 
         if (articulo.isAlquilado()) {
-            throw new ArticuloAlquiladoException("El artículo ya está alquilado");
+            throw new ArticuloAlquiladoException("Artículo ya alquilado");
         }
 
-        // Marcar artículo como alquilado
         articulo.setAlquilado(true);
         articuloService.save(articulo);
 
-        // Crear alquiler
-        alquiler.setUsuario(usuario);
-        alquiler.setArticulo(articulo);
-        alquiler.setFechaAlquiler(LocalDate.now());
-        alquiler.setVigente(true);
-
+        Alquiler alquiler = AlquilerMapper.toEntity(dto, usuario, articulo);
         return alquilerRepository.save(alquiler);
     }
 

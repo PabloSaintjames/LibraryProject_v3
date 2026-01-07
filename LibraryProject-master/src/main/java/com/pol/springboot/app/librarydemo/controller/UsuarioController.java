@@ -1,7 +1,11 @@
 package com.pol.springboot.app.librarydemo.controller;
 
+import com.pol.springboot.app.librarydemo.dto.usuario.UsuarioCreateDTO;
+import com.pol.springboot.app.librarydemo.dto.usuario.UsuarioResponseDTO;
+import com.pol.springboot.app.librarydemo.mapper.UsuarioMapper;
 import com.pol.springboot.app.librarydemo.model.Usuario;
 import com.pol.springboot.app.librarydemo.services.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,9 +29,13 @@ public class UsuarioController {
 
     // 🔹 Crear usuario
     @PostMapping
-    public Usuario create(@RequestBody Usuario usuario) {
-        return usuarioService.createUser(usuario);
+    public UsuarioResponseDTO create(
+            @Valid @RequestBody UsuarioCreateDTO dto
+    ) {
+        Usuario usuario = usuarioService.createUser(dto);
+        return UsuarioMapper.toResponseDTO(usuario);
     }
+
 
     // 🔹 Borrar usuario
     @DeleteMapping("/{id}")

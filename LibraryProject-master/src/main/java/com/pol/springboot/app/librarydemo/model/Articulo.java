@@ -1,49 +1,21 @@
 package com.pol.springboot.app.librarydemo.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.pol.springboot.app.librarydemo.model.Alquiler;
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "articulos")
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "tipo_articulo")
-public abstract class Articulo implements Serializable {
+public abstract class Articulo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String titulo;
 
-    private String categoria;
-
-    private boolean alquilado;
-
-    @OneToMany(mappedBy = "articulo")
-    @JsonIgnore
-    private List<Alquiler> alquileres;
-
-    @CreationTimestamp
-    @Column(updatable = false)
-    private Date createdAt;
-
-    @UpdateTimestamp
-    private Date updatedAt;
-
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
+    @Column(nullable = false)
+    private boolean alquilado = false;
 
     public Long getId() {
         return id;
@@ -69,28 +41,5 @@ public abstract class Articulo implements Serializable {
         this.alquilado = alquilado;
     }
 
-    public List<Alquiler> getAlquileres() {
-        return alquileres;
-    }
-
-    public void setAlquileres(List<Alquiler> alquileres) {
-        this.alquileres = alquileres;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
+    // getters / setters
 }
