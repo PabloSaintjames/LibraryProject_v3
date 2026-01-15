@@ -1,14 +1,12 @@
 package com.pol.springboot.app.librarydemo.model;
 
-import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "cds")
+//@DiscriminatorValue("CD")
 public class Cd extends Articulo {
 
-    @Column(nullable = false)
     private String estiloMusical;
 
     public String getEstiloMusical() {

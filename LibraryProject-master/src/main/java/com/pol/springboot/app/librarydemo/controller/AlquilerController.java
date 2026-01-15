@@ -3,7 +3,6 @@ package com.pol.springboot.app.librarydemo.controller;
 import com.pol.springboot.app.librarydemo.dto.alquiler.AlquilerCreateDTO;
 import com.pol.springboot.app.librarydemo.dto.alquiler.AlquilerResponseDTO;
 import com.pol.springboot.app.librarydemo.mapper.AlquilerMapper;
-import com.pol.springboot.app.librarydemo.model.Alquiler;
 import com.pol.springboot.app.librarydemo.services.AlquilerService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/alquileres")
-@CrossOrigin(origins = "http://localhost:4200") // Angular
+@CrossOrigin(origins = "http://localhost:4200")
 public class AlquilerController {
 
     private final AlquilerService alquilerService;
@@ -21,36 +20,37 @@ public class AlquilerController {
         this.alquilerService = alquilerService;
     }
 
-    // 🔹 Obtener todos los alquileres
+    // 🔹 TODOS los alquileres (DTO)
     @GetMapping
-    public List<Alquiler> getAll() {
-        return alquilerService.findAll();
+    public List<AlquilerResponseDTO> getAll() {
+        return alquilerService.findAll()
+                .stream()
+                .map(AlquilerMapper::toResponseDTO)
+                .toList();
     }
 
-    // 🔹 Obtener alquiler por id
+    // 🔹 Alquiler por ID (DTO)
     @GetMapping("/{id}")
-    public Alquiler getById(@PathVariable Long id) {
-        return alquilerService.findById(id);
+    public AlquilerResponseDTO getById(@PathVariable Long id) {
+        return AlquilerMapper.toResponseDTO(
+                alquilerService.findById(id)
+        );
     }
 
-    // 🔹 Crear un alquiler
     @PostMapping
     public AlquilerResponseDTO crear(
             @Valid @RequestBody AlquilerCreateDTO dto
     ) {
-        Alquiler alquiler = alquilerService.crearAlquiler(dto);
-        return AlquilerMapper.toResponseDTO(alquiler);
+        return AlquilerMapper.toResponseDTO(
+                alquilerService.crearAlquiler(dto)
+        );
     }
 
-    // 🔹 Devolver un artículo
+    // 🔹 Devolver artículo (cerrar alquiler)
     @PutMapping("/{id}/devolver")
-    public Alquiler devolver(@PathVariable Long id) {
-        return alquilerService.devolverArticulo(id);
-    }
-
-    // 🔹 Eliminar alquiler (opcional)
-    @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
-        alquilerService.deleteById(id);
+    public AlquilerResponseDTO devolver(@PathVariable Long id) {
+        return AlquilerMapper.toResponseDTO(
+                alquilerService.devolverArticulo(id)
+        );
     }
 }

@@ -45,6 +45,12 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    public Usuario usuarioActualMock() {
+        return usuarioRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Usuario mock no existe"));
+    }
+
+
     public void deleteUsuario(Long id) {
         usuarioRepository.deleteById(id);
     }

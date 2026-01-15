@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "articulos")
 @Inheritance(strategy = InheritanceType.JOINED)
+//@DiscriminatorColumn(name = "tipo")
 public abstract class Articulo {
 
     @Id
@@ -13,6 +14,7 @@ public abstract class Articulo {
 
     @Column(nullable = false)
     private String titulo;
+
 
     @Column(nullable = false)
     private boolean alquilado = false;

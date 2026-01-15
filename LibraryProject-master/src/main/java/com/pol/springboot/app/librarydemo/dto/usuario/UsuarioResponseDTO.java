@@ -14,8 +14,6 @@ public class UsuarioResponseDTO {
         this.rol = rol;
     }
 
-    // getters
-
     public Long getId() {
         return id;
     }
