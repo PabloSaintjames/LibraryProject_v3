@@ -50,6 +50,14 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuario mock no existe"));
     }
 
+    public Usuario findByEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Usuario no encontrado con email: " + email
+                        )
+                );
+    }
 
     public void deleteUsuario(Long id) {
         usuarioRepository.deleteById(id);

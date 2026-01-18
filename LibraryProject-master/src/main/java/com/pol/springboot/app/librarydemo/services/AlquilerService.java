@@ -12,6 +12,8 @@ import com.pol.springboot.app.librarydemo.model.Rol;
 import com.pol.springboot.app.librarydemo.model.Usuario;
 import com.pol.springboot.app.librarydemo.repository.AlquilerRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -38,22 +40,26 @@ public class AlquilerService {
        CONSULTAS
        ====================== */
 
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO')")
     public List<Alquiler> findAll() {
         return alquilerRepository.findAll();
     }
 
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO','USUARIO')")
     public Alquiler findById(Long id) {
         return alquilerRepository.findById(id)
                 .orElseThrow(() ->
                         new AlquilerNotFoundException(
                                 "Alquiler no encontrado con ID: " + id
-                        ));
+                        )
+                );
     }
 
     /* ======================
        CREAR ALQUILER
        ====================== */
 
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO','USUARIO')")
     @Transactional
     public Alquiler crearAlquiler(AlquilerCreateDTO dto) {
 
@@ -69,16 +75,15 @@ public class AlquilerService {
         articulo.setAlquilado(true);
         articuloService.save(articulo);
 
-        Alquiler alquiler = AlquilerMapper.toEntity(dto, usuario, articulo);
-        return alquilerRepository.save(alquiler);
+        return alquilerRepository.save(
+                AlquilerMapper.toEntity(dto, usuario, articulo)
+        );
     }
 
     private void validarRolParaAlquilar(Usuario usuario) {
-        Rol.TipoRol rol = usuario.getRol().getTipo();
-
-        if (rol == Rol.TipoRol.INVITADO) {
+        if (usuario.getRol().getTipo() == Rol.TipoRol.INVITADO) {
             throw new AccesoDenegadoException(
-                    "Los invitados no pueden alquilar artículos"
+                    "Los invitados no pueden alquilar"
             );
         }
     }
@@ -87,6 +92,7 @@ public class AlquilerService {
        DEVOLVER ALQUILER
        ====================== */
 
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO','USUARIO')")
     @Transactional
     public Alquiler devolverArticulo(Long alquilerId) {
 
@@ -98,8 +104,25 @@ public class AlquilerService {
             );
         }
 
-        Usuario actual = usuarioService.usuarioActualMock();
-        validarPermisoDevolucion(actual, alquiler);
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        Usuario actual = usuarioService.findByEmail(email);
+
+        boolean esAdminOOperario =
+                actual.getRol().getTipo() == Rol.TipoRol.ADMINISTRADOR ||
+                        actual.getRol().getTipo() == Rol.TipoRol.OPERARIO;
+
+        boolean esElQueAlquilo =
+                alquiler.getUsuario().getId().equals(actual.getId());
+
+        if (!esAdminOOperario && !esElQueAlquilo) {
+            throw new AccesoDenegadoException(
+                    "No puedes devolver este alquiler"
+            );
+        }
 
         Articulo articulo = alquiler.getArticulo();
         articulo.setAlquilado(false);
@@ -109,27 +132,5 @@ public class AlquilerService {
         alquiler.setFechaDevolucion(LocalDate.now());
 
         return alquilerRepository.save(alquiler);
-    }
-
-    private void validarPermisoDevolucion(Usuario actual, Alquiler alquiler) {
-
-        Rol.TipoRol rol = actual.getRol().getTipo();
-
-        boolean esAdminOOperario =
-                rol == Rol.TipoRol.ADMINISTRADOR ||
-                        rol == Rol.TipoRol.OPERARIO;
-
-        boolean esElQueAlquilo =
-                alquiler.getUsuario().getId().equals(actual.getId());
-
-        if (!esAdminOOperario && !esElQueAlquilo) {
-            throw new AccesoDenegadoException(
-                    "No tienes permiso para devolver este alquiler"
-            );
-        }
-    }
-
-    public void deleteById(Long id) {
-        alquilerRepository.deleteById(id);
     }
 }

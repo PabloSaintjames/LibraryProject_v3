@@ -1,163 +1,120 @@
 package com.pol.springboot.app.librarydemo.exceptions;
 
-import com.pol.springboot.app.librarydemo.dto.error.ApiErrorDTO;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import org.springframework.security.core.AuthenticationException;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /* =============================
-       400 — VALIDACIONES DTO
-       ============================= */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorDTO> handleValidation(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request
+    /* ==========================
+       ERRORES DE NEGOCIO
+       ========================== */
+
+    @ExceptionHandler(ArticuloAlquiladoException.class)
+    public ResponseEntity<ApiError> handleArticuloAlquilado(
+            ArticuloAlquiladoException ex
     ) {
-        String message = ex.getBindingResult()
-                .getFieldErrors()
-                .get(0)
-                .getDefaultMessage();
-
-        ApiErrorDTO error = new ApiErrorDTO(
-                400,
-                "BAD_REQUEST",
-                message,
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.badRequest().body(error);
+        return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
-    /* =============================
-       404 — NOT FOUND
-       ============================= */
-    @ExceptionHandler({
-            UsuarioNotFoundException.class,
-            ArticuloNotFoundException.class,
-            AlquilerNotFoundException.class
-    })
-    public ResponseEntity<ApiErrorDTO> handleNotFound(
-            RuntimeException ex,
-            HttpServletRequest request
+    @ExceptionHandler(AlquilerYaCerradoException.class)
+    public ResponseEntity<ApiError> handleAlquilerCerrado(
+            AlquilerYaCerradoException ex
     ) {
-        ApiErrorDTO error = new ApiErrorDTO(
-                404,
-                "NOT_FOUND",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    /* =============================
-       409 — CONFLICT (NEGOCIO / BD)
-       ============================= */
-    @ExceptionHandler({
-            ArticuloAlquiladoException.class,
-            AlquilerYaCerradoException.class,
-            DataIntegrityViolationException.class
-    })
-    public ResponseEntity<ApiErrorDTO> handleConflict(
-            RuntimeException ex,
-            HttpServletRequest request
+    @ExceptionHandler(AlquilerNotFoundException.class)
+    public ResponseEntity<ApiError> handleAlquilerNotFound(
+            AlquilerNotFoundException ex
     ) {
-        String message = ex instanceof DataIntegrityViolationException
-                ? "Conflicto de datos (posible duplicado)"
-                : ex.getMessage();
-
-        ApiErrorDTO error = new ApiErrorDTO(
-                409,
-                "CONFLICT",
-                message,
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    /* =============================
-       403 — FORBIDDEN (ROLES)
-       ============================= */
     @ExceptionHandler(AccesoDenegadoException.class)
-    public ResponseEntity<ApiErrorDTO> handleForbidden(
-            AccesoDenegadoException ex,
-            HttpServletRequest request
+    public ResponseEntity<ApiError> handleAccesoDenegado(
+            AccesoDenegadoException ex
     ) {
-        ApiErrorDTO error = new ApiErrorDTO(
-                403,
-                "FORBIDDEN",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        return build(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
-    /* =============================
-   401 — AUTHENTICATION
-   ============================= */
-    @ExceptionHandler({
-            BadCredentialsException.class,
-            AuthenticationException.class
-    })
-    public ResponseEntity<ApiErrorDTO> handleUnauthorized(
-            RuntimeException ex,
-            HttpServletRequest request
+    /* ==========================
+       SEGURIDAD
+       ========================== */
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleSpringAccessDenied(
+            AccessDeniedException ex
     ) {
-        ApiErrorDTO error = new ApiErrorDTO(
-                401,
+        return build(
+                HttpStatus.FORBIDDEN,
+                "No tienes permisos para realizar esta acción"
+        );
+    }
+
+    /* ==========================
+       VALIDACIONES
+       ========================== */
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleValidation(
+            MethodArgumentNotValidException ex
+    ) {
+        String mensaje = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .findFirst()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .orElse("Datos inválidos");
+
+        return build(HttpStatus.BAD_REQUEST, mensaje);
+    }
+
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    public ResponseEntity<ApiError> handleCredencialesInvalidas(
+            CredencialesInvalidasException ex
+    ) {
+        ApiError error = new ApiError(
+                HttpStatus.UNAUTHORIZED.value(),
                 "UNAUTHORIZED",
-                "Credenciales inválidas",
-                request.getRequestURI()
+                ex.getMessage()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(error);
     }
 
-    /* =============================
-   400 — BAD REQUEST (LÓGICA SIMPLE)
-   ============================= */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorDTO> handleBadRequest(
-            IllegalArgumentException ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorDTO error = new ApiErrorDTO(
-                400,
-                "BAD_REQUEST",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+    /* ==========================
+       FALLBACK GLOBAL
+       ========================== */
 
-        return ResponseEntity.badRequest().body(error);
-    }
-
-    /* =============================
-       500 — ERROR INTERNO REAL
-       ============================= */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorDTO> handleInternalError(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorDTO error = new ApiErrorDTO(
-                500,
-                "INTERNAL_SERVER_ERROR",
-                "Error interno del servidor",
-                request.getRequestURI()
+    public ResponseEntity<ApiError> handleGeneric(Exception ex) {
+        ex.printStackTrace(); // solo para DEV
+        return build(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error interno del servidor"
         );
+    }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    /* ==========================
+       UTIL
+       ========================== */
+
+    private ResponseEntity<ApiError> build(
+            HttpStatus status,
+            String message
+    ) {
+        ApiError error = new ApiError(
+                status.value(),
+                status.getReasonPhrase(),
+                message
+        );
+        return ResponseEntity.status(status).body(error);
     }
 }
