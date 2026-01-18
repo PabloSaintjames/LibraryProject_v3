@@ -1,13 +1,17 @@
 package com.pol.springboot.app.librarydemo.exceptions;
 
+import io.jsonwebtoken.JwtException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     /* ==========================
@@ -43,7 +47,7 @@ public class GlobalExceptionHandler {
     }
 
     /* ==========================
-       SEGURIDAD
+       SEGURIDAD / AUTORIZACIÓN
        ========================== */
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -53,6 +57,38 @@ public class GlobalExceptionHandler {
         return build(
                 HttpStatus.FORBIDDEN,
                 "No tienes permisos para realizar esta acción"
+        );
+    }
+
+    /* ==========================
+       AUTENTICACIÓN / JWT
+       ========================== */
+
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    public ResponseEntity<ApiError> handleCredencialesInvalidas(
+            CredencialesInvalidasException ex
+    ) {
+        return build(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthentication(
+            AuthenticationException ex
+    ) {
+        return build(
+                HttpStatus.UNAUTHORIZED,
+                "No autenticado o token inválido"
+        );
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ApiError> handleJwt(JwtException ex) {
+        return build(
+                HttpStatus.UNAUTHORIZED,
+                "JWT inválido o expirado"
         );
     }
 
@@ -74,28 +110,16 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, mensaje);
     }
 
-    @ExceptionHandler(CredencialesInvalidasException.class)
-    public ResponseEntity<ApiError> handleCredencialesInvalidas(
-            CredencialesInvalidasException ex
-    ) {
-        ApiError error = new ApiError(
-                HttpStatus.UNAUTHORIZED.value(),
-                "UNAUTHORIZED",
-                ex.getMessage()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(error);
-    }
-
     /* ==========================
        FALLBACK GLOBAL
        ========================== */
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex) {
-        ex.printStackTrace(); // solo para DEV
+
+        // Log real (producción)
+        log.error("Error no controlado", ex);
+
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Error interno del servidor"
