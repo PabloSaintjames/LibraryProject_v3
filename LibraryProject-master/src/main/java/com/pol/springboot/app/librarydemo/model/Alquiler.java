@@ -14,13 +14,14 @@ public class Alquiler {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "articulo_id")
     private Articulo articulo;
+
 
     @Column(nullable = false)
     private boolean vigente;

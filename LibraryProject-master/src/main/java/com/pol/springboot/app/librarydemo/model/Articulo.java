@@ -43,5 +43,4 @@ public abstract class Articulo {
         this.alquilado = alquilado;
     }
 
-    // getters / setters
 }

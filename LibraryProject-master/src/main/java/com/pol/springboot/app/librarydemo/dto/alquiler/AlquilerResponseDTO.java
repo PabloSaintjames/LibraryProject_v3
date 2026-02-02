@@ -10,6 +10,7 @@ public class AlquilerResponseDTO {
     private boolean vigente;
     private LocalDate fechaAlquiler;
     private LocalDate fechaDevolucion;
+    private String isbn;
 
     public AlquilerResponseDTO(
             Long id,
@@ -17,7 +18,8 @@ public class AlquilerResponseDTO {
             String articulo,
             boolean vigente,
             LocalDate fechaAlquiler,
-            LocalDate fechaDevolucion
+            LocalDate fechaDevolucion,
+            String isbn
     ) {
         this.id = id;
         this.usuario = usuario;
@@ -25,9 +27,9 @@ public class AlquilerResponseDTO {
         this.vigente = vigente;
         this.fechaAlquiler = fechaAlquiler;
         this.fechaDevolucion = fechaDevolucion;
+        this.isbn = isbn;
     }
 
-    // getters
 
     public Long getId() {
         return id;
@@ -52,4 +54,10 @@ public class AlquilerResponseDTO {
     public LocalDate getFechaDevolucion() {
         return fechaDevolucion;
     }
+
+    public String getIsbn() {
+        return isbn;
+
+    }
+
 }

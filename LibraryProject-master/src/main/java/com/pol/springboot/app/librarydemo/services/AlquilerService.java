@@ -42,7 +42,7 @@ public class AlquilerService {
 
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO')")
     public List<Alquiler> findAll() {
-        return alquilerRepository.findAll();
+        return alquilerRepository.findAllWithUsuarioAndArticulo();
     }
 
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO','USUARIO')")
