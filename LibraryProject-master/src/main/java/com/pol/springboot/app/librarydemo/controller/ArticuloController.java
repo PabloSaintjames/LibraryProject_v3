@@ -5,6 +5,7 @@ import com.pol.springboot.app.librarydemo.mapper.ArticuloMapper;
 import com.pol.springboot.app.librarydemo.model.Libro;
 import com.pol.springboot.app.librarydemo.services.ArticuloService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,19 +42,27 @@ public class ArticuloController {
 
     // 🔹 POST crear libro
     @PostMapping
-    public ArticuloResponseDTO crear(@RequestBody Map<String, Object> body) {
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO')")
+    public ArticuloResponseDTO crear(@RequestBody Map<String, Object> data) {
 
-        if (!"LIBRO".equals(body.get("tipo"))) {
+        String tipo = (String) data.get("tipo");
+
+        if (!"LIBRO".equals(tipo)) {
             throw new IllegalArgumentException("Solo se permite crear artículos tipo LIBRO");
         }
 
+        String titulo = (String) data.get("titulo");
+        String autor = (String) data.get("autor");
+        String isbn = (String) data.get("isbn");
+
+        if (titulo == null || autor == null || isbn == null) {
+            throw new IllegalArgumentException("Faltan campos obligatorios");
+        }
+
         Libro libro = new Libro();
-        libro.setTitulo((String) body.get("titulo"));
-        libro.setAutor((String) body.get("autor"));
-        libro.setIsbn((String) body.get("isbn"));
-        libro.setAlquilado(
-                body.get("alquilado") != null && (Boolean) body.get("alquilado")
-        );
+        libro.setTitulo(titulo);
+        libro.setAutor(autor);
+        libro.setIsbn(isbn);
 
         return ArticuloMapper.toResponse(
                 articuloService.save(libro)
@@ -62,6 +71,7 @@ public class ArticuloController {
 
     // 🔹 PUT editar libro
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO')")
     public ArticuloResponseDTO actualizar(
             @PathVariable Long id,
             @RequestBody Map<String, Object> body
@@ -70,7 +80,10 @@ public class ArticuloController {
                 articuloService.actualizarLibro(id, body)
         );
     }
+
+    // 🔹 PATCH alquilado / no alquilado
     @PatchMapping("/{id}/alquiler")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO')")
     public ArticuloResponseDTO cambiarEstadoAlquiler(
             @PathVariable Long id,
             @RequestBody Map<String, Object> body
@@ -86,16 +99,11 @@ public class ArticuloController {
         );
     }
 
-
     // 🔹 DELETE borrar artículo
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','OPERARIO')")
     public ResponseEntity<Void> borrar(@PathVariable Long id) {
         articuloService.borrarArticulo(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/test")
-    public String testPatch() {
-        return "PATCH OK";
     }
 }
